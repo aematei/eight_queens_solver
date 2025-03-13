@@ -1,131 +1,297 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Eight Queens - Frontend</title>
+  <title>Eight Queens Solver</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/vue@3"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
-    /* Container for overall layout: board and controls */
+    /* Base styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f9f9f9;
+      padding: 0 20px;
+    }
+
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    /* Container for overall layout */
     #app {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
     }
+
     .content {
       display: flex;
-      gap: 20px;
+      gap: 24px;
       align-items: flex-start;
       justify-content: center;
       width: 100%;
-      max-width: 900px;
+      margin-bottom: 24px;
     }
+
+    /* Header styling */
+    .header {
+      text-align: center;
+      margin: 40px 0 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      width: 100%;
+    }
+
+    .header h1 {
+      color: #1f2937;
+      margin-bottom: 12px;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .description {
+      color: #4b5563;
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+    }
+
     /* Board styling */
     .board {
       display: grid;
-      grid-template-columns: repeat(8, 50px);
-      grid-template-rows: repeat(8, 50px);
-      border: 2px solid #333;
+      grid-template-columns: repeat(8, 54px);
+      grid-template-rows: repeat(8, 54px);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
+
     .cell {
-      width: 50px;
-      height: 50px;
+      width: 54px;
+      height: 54px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
+      font-size: 2.25rem;
     }
+
     .white {
       background-color: #f0d9b5;
     }
+
     .black {
       background-color: #b58863;
     }
-    /* Panel with controls (slider and buttons) */
+
+    /* Panel with controls */
     .panel {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 20px;
-      align-items: center;
+      gap: 16px;
       width: 100%;
-      max-width: 900px;
+      max-width: 600px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
+
     .form-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
     }
-    /* Message box styling */
-    .message_box {
-      width: 250px;
-      height: 400px;
-      padding: 10px;
-      border: 1px solid #333;
-      overflow-y: auto;
+
+    .buttons-row {
       display: flex;
-      flex-direction: column-reverse; /* Newest messages at the bottom */
+      gap: 12px;
     }
-    .message_item {
-      padding: 5px 0;
-      border-bottom: 1px solid #eee;
-      word-wrap: break-word;
+
+    /* Slider styling */
+    .slider-container {
+      width: 100%;
     }
-    .latest-message {
-      color: #2e7d32;
-      font-weight: bold;
-    }
-    .old-message {
-      color: #666;
-    }
+
     .slider-label {
       font-size: 14px;
+      font-weight: 500;
+      color: #4b5563;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+    }
+
+    /* Message box styling */
+    .message_box {
+      width: 280px;
+      height: 432px; /* Match board height (8 * 54px) */
+      padding: 16px;
+      border-radius: 8px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .message_item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+      word-wrap: break-word;
+    }
+
+    .message_item p {
+      margin: 0;
+    }
+
+    .latest-message {
+      color: #059669;
+      font-weight: 600;
+    }
+
+    .old-message {
+      color: #6b7280;
+    }
+
+    /* Footer styling */
+    .footer {
+      margin-top: 40px;
+      padding: 16px 0;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+      width: 100%;
+      color: #6b7280;
+    }
+
+    .footer a {
+      color: #3b82f6;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 800px) {
+      .content {
+        flex-direction: column-reverse;
+        align-items: center;
+      }
+
+      .message_box {
+        width: 100%;
+        max-width: 432px;
+        height: 200px;
+      }
     }
   </style>
 </head>
+
 <body>
   <div id="app">
+    <div class="header">
+      <h1>Eight Queens Solver</h1>
+      <p class="description">
+        The Eight Queens puzzle is a classic chess problem where you must place eight queens on an 8×8 chessboard
+        so that no two queens threaten each other. This means no two queens can share the same row, column, or diagonal.
+        Watch the algorithm solve this challenge step by step!
+      </p>
+    </div>
+
     <div class="content">
       <div class="message_box">
-        <div v-for="(msg, index) in messageHistory" :key="index" 
-             :class="[
+        <div v-for="(msg, index) in messageHistory" :key="index" :class="[
                'message_item', 
                index === 0 ? 'latest-message' : 'old-message'
              ]">
           <p v-html="msg"></p>
         </div>
       </div>
-      
+
       <div class="board">
-        <div 
-          v-for="(cell, index) in 64" 
-          :key="index"
-          class="cell"
+        <div v-for="(cell, index) in 64" :key="index" class="cell"
           :class="(((Math.floor(index / 8) + index % 8) % 2 === 0) ? 'white' : 'black')">
           <span v-if="isQueenAt(Math.floor(index / 8), index % 8)">♕</span>
         </div>
       </div>
     </div>
+
     <div class="panel">
-      <div class="form-row">
-        <span class="slider-label">Animation Speed (Slow → Fast):</span>
+      <div class="slider-container">
+        <span class="slider-label">Animation Speed</span>
         <input type="range" v-model.number="sliderValue" min="100" max="2000" step="100" title="Adjust animation speed">
       </div>
-      <div class="form-row">
+      <div class="buttons-row">
         <button @click="play">Play</button>
         <button @click="pause">Pause</button>
         <button @click="restart">Restart</button>
       </div>
     </div>
+    
+    <div class="footer">
+      <p>
+        Eight Queens Solver by <a href="https://github.com/aematei" target="_blank" rel="noopener">Alex Matei</a> |
+        <a href="https://github.com/aematei/eight_queens_solver" target="_blank" rel="noopener">Project
+          Repository</a>
+      </p>
+    </div>
   </div>
+
   <script>
     const { createApp, ref, computed } = Vue;
     createApp({
       setup() {
         const queens = ref(Array.from({ length: 8 }, (_, col) => ({ row: 0, col })));
-        const message = ref("Welcome to Eight Queens solver");
-        const messageHistory = ref(["Welcome to Eight Queens solver"]);
+        const message = ref("Welcome to Eight Queens Solver! Press play to start.");
+        const messageHistory = ref(["Welcome to Eight Queens Solver! Press play to start."]);
         const steps = ref([]);
         const currentStep = ref(0);
         const timer = ref(null);
@@ -160,7 +326,7 @@
             // Update message and add to history
             message.value = step.message;
             messageHistory.value.unshift(step.message);
-            
+
             // Limit history length to avoid memory issues
             if (messageHistory.value.length > 50) {
               messageHistory.value = messageHistory.value.slice(0, 50);
@@ -228,4 +394,5 @@
     }).mount('#app');
   </script>
 </body>
+
 </html>

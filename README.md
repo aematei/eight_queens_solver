@@ -1,23 +1,54 @@
-# Eight Queens Algorithm
+# Eight Queens Solver
 
-The Eight Queens algorithm is a classic problem in computer science and combinatorial optimization. The goal is to place eight queens on an 8x8 chessboard such that no two queens threaten each other. This means that no two queens can be in the same row, column, or diagonal.
+A visual algorithm explorer for the classic Eight Queens puzzle, developed for CS 4200 - Artificial Intelligence (Cal Poly Pomona, Spring 2025).
+
+## About the Eight Queens Problem
+
+The Eight Queens puzzle is a classic chess problem that asks: "How can eight queens be placed on a standard 8×8 chess board so that no queen attacks any other queen?" A queen can attack any piece in the same row, column, or diagonal.
+
+This problem is a common example used to teach backtracking algorithms and constraint satisfaction problems in artificial intelligence.
 
 ## Algorithm Explanation
 
-1. **Initialize the Board**: Create an 8x8 board initialized with zeros. Each cell represents a position on the chessboard, and a value of 1 indicates a queen is placed there.
+The solution uses a backtracking algorithm that works as follows:
 
-2. **Check Safety**: For each position on the board, check if placing a queen there is safe. A position is considered safe if no other queens threaten it. This involves checking:
-   - The column of the position.
-   - The upper left diagonal of the position.
-   - The upper right diagonal of the position.
+1. Start with an empty chess board
+2. Try placing a queen in the first row
+3. Move to the next row and try to place another queen where it cannot be attacked
+4. If no safe position is found in the current row, backtrack to the previous row and try a different position
+5. Repeat until all eight queens are placed successfully or all possibilities are exhausted
 
-3. **Place Queens Recursively**: Use a recursive function to place queens on the board. Start from the first row and attempt to place a queen in each column. If placing a queen in a column is safe, place the queen and move to the next row. If placing a queen in any column of the current row is not possible, backtrack to the previous row and move the queen to the next column.
+The algorithm's time complexity is O(n!), but optimizations significantly reduce the actual search space.
 
-4. **Print the Solution**: Once all queens are placed on the board such that no two queens threaten each other, print the board.
+## How to Use the Application
 
-## Steps
+1. Clone this repository
+2. Install the required dependencies: `pip install flask`
+3. Run the Flask application: `python app.py`
+4. Open your browser and navigate to `http://localhost:8000`
+5. Use the controls to:
 
-1. **Initialize the Board**:
-   ```python
-   n = 8
-   board = [[0] * n for _ in range(n)]
+- Play: Start the algorithm visualization
+- Pause: Temporarily stop the animation
+- Restart: Reset the board
+- Speed slider: Adjust the animation speed
+
+## Screenshot
+
+![Eight Queens Solver in action](screenshot.png)
+*(Screenshot placeholder - replace with an actual screenshot of your application)*
+
+## Implementation Details
+
+- Backend: Python with Flask
+- Frontend: HTML, CSS, and Vue.js (no build step required)
+- Algorithm visualization with step-by-step animation
+- Interactive controls for educational exploration
+
+## License
+
+MIT License
+
+---
+
+Developed by Alex Matei for CS 4200 - Artificial Intelligence, Cal Poly Pomona (Spring 2025)
