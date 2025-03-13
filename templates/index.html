@@ -39,12 +39,6 @@
       gap: 10px;
       align-items: center;
     }
-    .panel input {
-      width: 50px;
-      padding: 5px;
-      margin-right: 5px;
-      text-align: center;
-    }
     .panel button {
       padding: 5px 10px;
       font-size: 16px;
@@ -64,24 +58,10 @@
         :key="index"
         class="cell"
         :class="(((Math.floor(index / 8) + index % 8) % 2 === 0) ? 'white' : 'black')">
-        <!-- Calculate row and col for the cell -->
         <span v-if="isQueenAt(Math.floor(index / 8), index % 8)">♕</span>
       </div>
     </div>
     <div class="panel">
-      <div class="form-row">
-        <label for="queenIndex">Queen (by initial col): </label>
-        <input id="queenIndex" type="number" v-model.number="moveQueenIndex" min="0" max="7">
-      </div>
-      <div class="form-row">
-        <label for="newRow">New Row:</label>
-        <input id="newRow" type="number" v-model.number="moveRow" min="0" max="7">
-        <label for="newCol">New Col:</label>
-        <input id="newCol" type="number" v-model.number="moveCol" min="0" max="7">
-      </div>
-      <div class="form-row">
-        <button @click="moveQueen">Move Queen</button>
-      </div>
       <div class="form-row">
         <button @click="play">Play</button>
         <button @click="pause">Pause</button>
@@ -95,31 +75,27 @@
       data() {
         return {
           // Initialize eight queens on the top row in columns 0 to 7
-          queens: Array.from({length: 8}, (_, col) => ({ row: 0, col })),
-          moveQueenIndex: 0,
-          moveRow: 0,
-          moveCol: 0
+          queens: Array.from({length: 8}, (_, col) => ({ row: 0, col }))
         };
       },
       methods: {
+        fetchSolution() {
+          fetch('/solve')
+            .then(response => response.json())
+            .then(data => {
+              // 'data' is a list of queen objects like [{row: 0, col: 0}, ...]
+              // Update the queens state; the board will re-render with new positions.
+              this.queens = data;
+            })
+            .catch(error => console.error('Error fetching solution:', error));
+        },
         isQueenAt(row, col) {
           return this.queens.some(q => q.row === row && q.col === col);
         },
-        moveQueen() {
-          // Move the queen identified by moveQueenIndex to new coordinates if valid
-          if (this.moveQueenIndex < 0 || this.moveQueenIndex >= this.queens.length) {
-            console.error("Queen index must be between 0 and 7");
-            return;
-          }
-          if (this.moveRow < 0 || this.moveRow > 7 || this.moveCol < 0 || this.moveCol > 7) {
-            console.error("Row and Column must be between 0 and 7");
-            return;
-          }
-          // Update the queen's coordinates
-          this.queens[this.moveQueenIndex] = { row: this.moveRow, col: this.moveCol };
-        },
         play() {
-          console.log("Play clicked");
+          // Call fetchSolution so that queens move to their computed solution positions
+          this.fetchSolution();
+          console.log("Play clicked. Fetching solution.");
         },
         pause() {
           console.log("Pause clicked");

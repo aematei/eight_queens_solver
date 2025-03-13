@@ -25,25 +25,37 @@ def is_safe(board, row, col):
 def solve_n_queens(board, row):
     # Check if the board is full -> solution found
     if row == len(board):
-        print_board(board)
-        print("Solution found! Check the board.")
         return True
 
     # Try placing a queen in each column of the current row
     for col in range(len(board)):
         if is_safe(board, row, col):
             board[row][col] = 1
-            if solve_n_queens(board, row + 1): # Recursively solve the next row
+            if solve_n_queens(board, row + 1):  # Recursively solve the next row
                 return True
-            board[row][col] = 0
+            board[row][col] = 0  # Backtrack
 
     return False
 
-def main():
+def get_solution():
+    """Solves the eight queens algorithm and returns the solution as a list 
+    of queen positions. Each queen is represented as a dict with 'row' and 'col'."""
     n = 8
     board = [[0] * n for _ in range(n)]
-    if not solve_n_queens(board, 0):
-        print("No solution exists.")
+    if solve_n_queens(board, 0):
+        queens = []
+        for row in range(n):
+            for col in range(n):
+                if board[row][col] == 1:
+                    queens.append({"row": row, "col": col})
+        return queens
+    return None
 
 if __name__ == "__main__":
-    main()
+    solution = get_solution()
+    if solution:
+        print("Solution (queen coordinates):")
+        for queen in solution:
+            print(queen)
+    else:
+        print("No solution exists.")

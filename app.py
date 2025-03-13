@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
+import eight_queens
 
 app = Flask(__name__)
 
@@ -6,7 +7,14 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/solve')
+def solve():
+    solution = eight_queens.get_solution()
+    if solution is None:
+        return jsonify({"error": "No solution found"}), 404
+    return jsonify(solution)
+
 if __name__ == '__main__':
-    # Use 0.0.0.0 to make it accessible from other machines if needed.
+    # Enable debug mode for hot reloading during development
     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(host='0.0.0.0', port=8000, debug=True)
