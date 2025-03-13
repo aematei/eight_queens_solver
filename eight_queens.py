@@ -61,19 +61,32 @@ def get_queens_from_board(board):
     return queens
 
 def solve_n_queens_steps(board, row, steps):
-    # Record current board state
-    steps.append(get_queens_from_board(board))
+    # Record a step: state and a message.
+    steps.append({
+      "queens": get_queens_from_board(board),
+      "message": f"At row {row}: looking for a safe column."
+    })
     if row == len(board):
+        steps.append({
+            "queens": get_queens_from_board(board),
+            "message": "All queens placed successfully."
+        })
         return True
 
     for col in range(len(board)):
         if is_safe(board, row, col):
             board[row][col] = 1
-            steps.append(get_queens_from_board(board))
+            steps.append({
+                "queens": get_queens_from_board(board),
+                "message": f"Placing queen at row {row}, column {col}."
+            })
             if solve_n_queens_steps(board, row + 1, steps):
                 return True
             board[row][col] = 0
-            steps.append(get_queens_from_board(board))
+            steps.append({
+                "queens": get_queens_from_board(board),
+                "message": f"Backtracking: Removing queen from row {row}, column {col}."
+            })
     return False
 
 def get_solution_steps():

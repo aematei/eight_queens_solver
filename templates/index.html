@@ -6,17 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/vue@3"></script>
   <style>
+    /* Container for overall layout: board and controls */
     #app {
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-top: 30px;
     }
+    .content {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+    }
+    /* Board styling */
     .board {
       display: grid;
       grid-template-columns: repeat(8, 50px);
       grid-template-rows: repeat(8, 50px);
-      margin-bottom: 20px;
       border: 2px solid #333;
     }
     .cell {
@@ -33,20 +42,42 @@
     .black {
       background-color: #b58863;
     }
+    /* Panel with controls (slider and buttons) */
     .panel {
       display: flex;
       flex-direction: column;
       gap: 10px;
+      margin-top: 20px;
       align-items: center;
-    }
-    .panel button {
-      padding: 5px 10px;
-      font-size: 16px;
+      width: 100%;
+      max-width: 900px;
     }
     .form-row {
       display: flex;
       align-items: center;
       gap: 10px;
+    }
+    /* Message box styling */
+    .message_box {
+      width: 250px;
+      height: 400px;
+      padding: 10px;
+      border: 1px solid #333;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse; /* Newest messages at the bottom */
+    }
+    .message_item {
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+      word-wrap: break-word;
+    }
+    .latest-message {
+      color: #2e7d32;
+      font-weight: bold;
+    }
+    .old-message {
+      color: #666;
     }
     .slider-label {
       font-size: 14px;
@@ -55,23 +86,29 @@
 </head>
 <body>
   <div id="app">
-    <div class="board">
-      <div 
-        v-for="(cell, index) in 64" 
-        :key="index"
-        class="cell"
-        :class="(((Math.floor(index / 8) + index % 8) % 2 === 0) ? 'white' : 'black')">
-        <span v-if="isQueenAt(Math.floor(index / 8), index % 8)">♕</span>
+    <div class="content">
+      <div class="message_box">
+        <div v-for="(msg, index) in messageHistory" :key="index" 
+             :class="[
+               'message_item', 
+               index === 0 ? 'latest-message' : 'old-message'
+             ]">
+          <p v-html="msg"></p>
+        </div>
+      </div>
+      
+      <div class="board">
+        <div 
+          v-for="(cell, index) in 64" 
+          :key="index"
+          class="cell"
+          :class="(((Math.floor(index / 8) + index % 8) % 2 === 0) ? 'white' : 'black')">
+          <span v-if="isQueenAt(Math.floor(index / 8), index % 8)">♕</span>
+        </div>
       </div>
     </div>
     <div class="panel">
       <div class="form-row">
-        <!--
-          The slider now controls sliderValue which runs from 100 to 2000.
-          The computed property "computedAnimationSpeed" inverts that value so:
-          - When sliderValue === 100, computedAnimationSpeed becomes 2000 (slow).
-          - When sliderValue === 2000, computedAnimationSpeed becomes 100 (fast).
-        -->
         <span class="slider-label">Animation Speed (Slow → Fast):</span>
         <input type="range" v-model.number="sliderValue" min="100" max="2000" step="100" title="Adjust animation speed">
       </div>
@@ -83,81 +120,110 @@
     </div>
   </div>
   <script>
-    const { createApp } = Vue;
+    const { createApp, ref, computed } = Vue;
     createApp({
-      data() {
-        return {
-          queens: Array.from({ length: 8 }, (_, col) => ({ row: 0, col })),
-          steps: [],
-          currentStep: 0,
-          timer: null,
-          // sliderValue in the range 100 to 2000.
-          sliderValue: 100
-        };
-      },
-      computed: {
-        // Invert the slider: lower sliderValue (left) becomes a higher delay (slow)
-        // and higher sliderValue (right) becomes a lower delay (fast).
-        // For example, if min delay = 100 and max delay = 2000:
-        // computedAnimationSpeed = maxDelay + minDelay - sliderValue.
-        computedAnimationSpeed() {
+      setup() {
+        const queens = ref(Array.from({ length: 8 }, (_, col) => ({ row: 0, col })));
+        const message = ref("Welcome to Eight Queens solver");
+        const messageHistory = ref(["Welcome to Eight Queens solver"]);
+        const steps = ref([]);
+        const currentStep = ref(0);
+        const timer = ref(null);
+        const sliderValue = ref(100);
+
+        const computedAnimationSpeed = computed(() => {
           const minDelay = 100;
           const maxDelay = 2000;
-          return maxDelay + minDelay - this.sliderValue;
-        }
-      },
-      methods: {
-        fetchSolutionSteps() {
-          fetch('/solve_steps')
-            .then(response => response.json())
-            .then(data => {
-              this.steps = data;
-              this.currentStep = 0;
-              this.animateSteps();
-            })
-            .catch(error => console.error('Error fetching solution steps:', error));
-        },
-        animateSteps() {
-          if (this.currentStep < this.steps.length) {
-            this.queens = this.steps[this.currentStep];
-            this.currentStep++;
-            // Use computedAnimationSpeed as the delay.
-            this.timer = setTimeout(() => this.animateSteps(), this.computedAnimationSpeed);
+          return maxDelay + minDelay - sliderValue.value;
+        });
+
+        const fetchSolutionSteps = async () => {
+          try {
+            const response = await fetch('/solve_steps');
+            const data = await response.json();
+            steps.value = data;
+            currentStep.value = 0;
+            // Clear old message history when starting a new solution
+            messageHistory.value = ["Starting new solution..."];
+            animateSteps();
+          } catch (error) {
+            console.error('Error fetching solution steps:', error);
+            messageHistory.value.unshift("Error fetching solution steps");
+          }
+        };
+
+        const animateSteps = () => {
+          if (currentStep.value < steps.value.length) {
+            const step = steps.value[currentStep.value];
+            queens.value = step.queens;
+
+            // Update message and add to history
+            message.value = step.message;
+            messageHistory.value.unshift(step.message);
+            
+            // Limit history length to avoid memory issues
+            if (messageHistory.value.length > 50) {
+              messageHistory.value = messageHistory.value.slice(0, 50);
+            }
+
+            currentStep.value++;
+            timer.value = setTimeout(animateSteps, computedAnimationSpeed.value);
           } else {
-            this.timer = null;
+            timer.value = null;
+            messageHistory.value.unshift("Solution completed!");
           }
-        },
-        play() {
-          if (this.timer) {
-            return;
-          }
-          if (this.steps.length > 0 && this.currentStep < this.steps.length) {
-            this.animateSteps();
+        };
+
+        const play = () => {
+          if (timer.value) return;
+          if (steps.value.length > 0 && currentStep.value < steps.value.length) {
+            messageHistory.value.unshift("Resuming animation...");
+            animateSteps();
           } else {
-            this.fetchSolutionSteps();
+            messageHistory.value.unshift("Fetching solution steps...");
+            fetchSolutionSteps();
           }
-          console.log("Play clicked. Starting/resuming animation.");
-        },
-        pause() {
-          if (this.timer) {
-            clearTimeout(this.timer);
-            this.timer = null;
-            console.log("Animation paused at step", this.currentStep);
+        };
+
+        const pause = () => {
+          if (timer.value) {
+            clearTimeout(timer.value);
+            timer.value = null;
+            messageHistory.value.unshift("Animation paused");
           }
-        },
-        restart() {
-          if (this.timer) {
-            clearTimeout(this.timer);
-            this.timer = null;
+        };
+
+        const restart = () => {
+          if (timer.value) {
+            clearTimeout(timer.value);
+            timer.value = null;
           }
-          this.steps = [];
-          this.currentStep = 0;
-          this.queens = Array.from({ length: 8 }, (_, col) => ({ row: 0, col }));
-          console.log("Restart clicked. Animation reset.");
-        },
-        isQueenAt(row, col) {
-          return this.queens.some(q => q.row === row && q.col === col);
-        }
+          steps.value = [];
+          currentStep.value = 0;
+          queens.value = Array.from({ length: 8 }, (_, col) => ({ row: 0, col }));
+          messageHistory.value = ["Reset to initial state. Press Play to start."];
+        };
+
+        const isQueenAt = (row, col) => {
+          return queens.value.some(q => q.row === row && q.col === col);
+        };
+
+        return {
+          queens,
+          steps,
+          currentStep,
+          timer,
+          sliderValue,
+          computedAnimationSpeed,
+          fetchSolutionSteps,
+          animateSteps,
+          play,
+          pause,
+          restart,
+          isQueenAt,
+          message,
+          messageHistory
+        };
       }
     }).mount('#app');
   </script>
