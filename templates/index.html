@@ -46,7 +46,10 @@
     .form-row {
       display: flex;
       align-items: center;
-      margin-bottom: 5px;
+      gap: 10px;
+    }
+    .slider-label {
+      font-size: 14px;
     }
   </style>
 </head>
@@ -63,6 +66,16 @@
     </div>
     <div class="panel">
       <div class="form-row">
+        <!--
+          The slider now controls sliderValue which runs from 100 to 2000.
+          The computed property "computedAnimationSpeed" inverts that value so:
+          - When sliderValue === 100, computedAnimationSpeed becomes 2000 (slow).
+          - When sliderValue === 2000, computedAnimationSpeed becomes 100 (fast).
+        -->
+        <span class="slider-label">Animation Speed (Slow → Fast):</span>
+        <input type="range" v-model.number="sliderValue" min="100" max="2000" step="100" title="Adjust animation speed">
+      </div>
+      <div class="form-row">
         <button @click="play">Play</button>
         <button @click="pause">Pause</button>
         <button @click="restart">Restart</button>
@@ -74,36 +87,76 @@
     createApp({
       data() {
         return {
-          // Initialize eight queens on the top row in columns 0 to 7
-          queens: Array.from({length: 8}, (_, col) => ({ row: 0, col }))
+          queens: Array.from({ length: 8 }, (_, col) => ({ row: 0, col })),
+          steps: [],
+          currentStep: 0,
+          timer: null,
+          // sliderValue in the range 100 to 2000.
+          sliderValue: 100
         };
       },
+      computed: {
+        // Invert the slider: lower sliderValue (left) becomes a higher delay (slow)
+        // and higher sliderValue (right) becomes a lower delay (fast).
+        // For example, if min delay = 100 and max delay = 2000:
+        // computedAnimationSpeed = maxDelay + minDelay - sliderValue.
+        computedAnimationSpeed() {
+          const minDelay = 100;
+          const maxDelay = 2000;
+          return maxDelay + minDelay - this.sliderValue;
+        }
+      },
       methods: {
-        fetchSolution() {
-          fetch('/solve')
+        fetchSolutionSteps() {
+          fetch('/solve_steps')
             .then(response => response.json())
             .then(data => {
-              // 'data' is a list of queen objects like [{row: 0, col: 0}, ...]
-              // Update the queens state; the board will re-render with new positions.
-              this.queens = data;
+              this.steps = data;
+              this.currentStep = 0;
+              this.animateSteps();
             })
-            .catch(error => console.error('Error fetching solution:', error));
+            .catch(error => console.error('Error fetching solution steps:', error));
+        },
+        animateSteps() {
+          if (this.currentStep < this.steps.length) {
+            this.queens = this.steps[this.currentStep];
+            this.currentStep++;
+            // Use computedAnimationSpeed as the delay.
+            this.timer = setTimeout(() => this.animateSteps(), this.computedAnimationSpeed);
+          } else {
+            this.timer = null;
+          }
+        },
+        play() {
+          if (this.timer) {
+            return;
+          }
+          if (this.steps.length > 0 && this.currentStep < this.steps.length) {
+            this.animateSteps();
+          } else {
+            this.fetchSolutionSteps();
+          }
+          console.log("Play clicked. Starting/resuming animation.");
+        },
+        pause() {
+          if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+            console.log("Animation paused at step", this.currentStep);
+          }
+        },
+        restart() {
+          if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+          }
+          this.steps = [];
+          this.currentStep = 0;
+          this.queens = Array.from({ length: 8 }, (_, col) => ({ row: 0, col }));
+          console.log("Restart clicked. Animation reset.");
         },
         isQueenAt(row, col) {
           return this.queens.some(q => q.row === row && q.col === col);
-        },
-        play() {
-          // Call fetchSolution so that queens move to their computed solution positions
-          this.fetchSolution();
-          console.log("Play clicked. Fetching solution.");
-        },
-        pause() {
-          console.log("Pause clicked");
-        },
-        restart() {
-          // Reset queens to their initial positions (top row)
-          this.queens = Array.from({length: 8}, (_, col) => ({ row: 0, col }));
-          console.log("Restart clicked");
         }
       }
     }).mount('#app');

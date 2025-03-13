@@ -14,6 +14,11 @@ def solve():
         return jsonify({"error": "No solution found"}), 404
     return jsonify(solution)
 
+@app.route('/solve_steps')
+def solve_steps():
+    steps = eight_queens.get_solution_steps()
+    return jsonify(steps)
+
 if __name__ == '__main__':
     # Enable debug mode for hot reloading during development
     app.config['TEMPLATES_AUTO_RELOAD'] = True

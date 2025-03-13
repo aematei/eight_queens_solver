@@ -51,11 +51,40 @@ def get_solution():
         return queens
     return None
 
+def get_queens_from_board(board):
+    n = len(board)
+    queens = []
+    for row in range(n):
+        for col in range(n):
+            if board[row][col] == 1:
+                queens.append({"row": row, "col": col})
+    return queens
+
+def solve_n_queens_steps(board, row, steps):
+    # Record current board state
+    steps.append(get_queens_from_board(board))
+    if row == len(board):
+        return True
+
+    for col in range(len(board)):
+        if is_safe(board, row, col):
+            board[row][col] = 1
+            steps.append(get_queens_from_board(board))
+            if solve_n_queens_steps(board, row + 1, steps):
+                return True
+            board[row][col] = 0
+            steps.append(get_queens_from_board(board))
+    return False
+
+def get_solution_steps():
+    n = 8
+    board = [[0] * n for _ in range(n)]
+    steps = []
+    solve_n_queens_steps(board, 0, steps)
+    return steps
+
 if __name__ == "__main__":
-    solution = get_solution()
-    if solution:
-        print("Solution (queen coordinates):")
-        for queen in solution:
-            print(queen)
-    else:
-        print("No solution exists.")
+    steps = get_solution_steps()
+    print("Steps:")
+    for step in steps:
+        print(step)
