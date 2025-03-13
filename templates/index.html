@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Eight Queens - Frontend</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(8, 50px);
+      grid-template-rows: repeat(8, 50px);
+      margin-bottom: 20px;
+      border: 2px solid #333;
+    }
+    .cell {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+    .white {
+      background-color: #f0d9b5;
+    }
+    .black {
+      background-color: #b58863;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .panel input {
+      width: 50px;
+      padding: 5px;
+      margin-right: 5px;
+      text-align: center;
+    }
+    .panel button {
+      padding: 5px 10px;
+      font-size: 16px;
+    }
+    .form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="board">
+      <div 
+        v-for="(cell, index) in 64" 
+        :key="index"
+        class="cell"
+        :class="(((Math.floor(index / 8) + index % 8) % 2 === 0) ? 'white' : 'black')">
+        <!-- Calculate row and col for the cell -->
+        <span v-if="isQueenAt(Math.floor(index / 8), index % 8)">♕</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="form-row">
+        <label for="queenIndex">Queen (by initial col): </label>
+        <input id="queenIndex" type="number" v-model.number="moveQueenIndex" min="0" max="7">
+      </div>
+      <div class="form-row">
+        <label for="newRow">New Row:</label>
+        <input id="newRow" type="number" v-model.number="moveRow" min="0" max="7">
+        <label for="newCol">New Col:</label>
+        <input id="newCol" type="number" v-model.number="moveCol" min="0" max="7">
+      </div>
+      <div class="form-row">
+        <button @click="moveQueen">Move Queen</button>
+      </div>
+      <div class="form-row">
+        <button @click="play">Play</button>
+        <button @click="pause">Pause</button>
+        <button @click="restart">Restart</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() {
+        return {
+          // Initialize eight queens on the top row in columns 0 to 7
+          queens: Array.from({length: 8}, (_, col) => ({ row: 0, col })),
+          moveQueenIndex: 0,
+          moveRow: 0,
+          moveCol: 0
+        };
+      },
+      methods: {
+        isQueenAt(row, col) {
+          return this.queens.some(q => q.row === row && q.col === col);
+        },
+        moveQueen() {
+          // Move the queen identified by moveQueenIndex to new coordinates if valid
+          if (this.moveQueenIndex < 0 || this.moveQueenIndex >= this.queens.length) {
+            console.error("Queen index must be between 0 and 7");
+            return;
+          }
+          if (this.moveRow < 0 || this.moveRow > 7 || this.moveCol < 0 || this.moveCol > 7) {
+            console.error("Row and Column must be between 0 and 7");
+            return;
+          }
+          // Update the queen's coordinates
+          this.queens[this.moveQueenIndex] = { row: this.moveRow, col: this.moveCol };
+        },
+        play() {
+          console.log("Play clicked");
+        },
+        pause() {
+          console.log("Pause clicked");
+        },
+        restart() {
+          // Reset queens to their initial positions (top row)
+          this.queens = Array.from({length: 8}, (_, col) => ({ row: 0, col }));
+          console.log("Restart clicked");
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
